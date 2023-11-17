@@ -96,7 +96,7 @@ class BMViewerClient : ClientModInitializer {
             }
         }
 
-        ClientPlayNetworking.registerGlobalReceiver(Identifier.of("bmviewer", ConfigLoader.channel)) {
+        ClientPlayNetworking.registerGlobalReceiver(Identifier.of(ConfigLoader.namespace, ConfigLoader.channel)) {
             client: MinecraftClient, network: ClientPlayNetworkHandler, packet: PacketByteBuf, sender: PacketSender ->
             val string = packet.writtenBytes.decodeToString()
             val config = try {

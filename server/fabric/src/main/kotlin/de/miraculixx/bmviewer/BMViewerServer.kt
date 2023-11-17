@@ -28,9 +28,10 @@ class BMViewerServer : DedicatedServerModInitializer {
     override fun onInitializeServer() {
         ServerLifecycleEvents.SERVER_STARTING.register { server: MinecraftServer ->
             LOGGER.info(server.serverIp)
+            println(server.serverIp)
         }
 
-        val identifier = Identifier.of("bmviewer", ConfigLoader.channel)
+        val identifier = Identifier.of(ConfigLoader.namespace, ConfigLoader.channel)
         var byteBuffer = json.encodeToString(config).toByteArray()
         ServerPlayConnectionEvents.JOIN.register { network: ServerPlayNetworkHandler, sender: PacketSender, server: MinecraftServer ->
             sender.sendPacket(identifier, PacketByteBufs.create().writeByteArray(byteBuffer))
