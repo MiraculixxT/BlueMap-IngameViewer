@@ -1,6 +1,6 @@
 package de.miraculixx.bmviewer.screen
 
-import de.miraculixx.bmviewer.client.BMViewerClient
+import de.miraculixx.bmviewer.BMViewerClient
 import de.miraculixx.bmviewer.util.BrowserScreenHelper
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.browser
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.isOpen
@@ -14,9 +14,7 @@ import net.minecraft.client.gui.widget.TextFieldWidget
 import net.minecraft.client.gui.widget.TextWidget
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import java.net.HttpURLConnection
 import java.net.URI
-import java.net.URL
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
@@ -38,7 +36,6 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
         val transparent = false
         BrowserScreenHelper.openScreen = this
         BrowserScreenHelper.tooltipText = null
-
 
 
         // Reload/Load BlueMap if needed

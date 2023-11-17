@@ -2,14 +2,17 @@ package de.miraculixx.bmviewer.util
 
 import com.cinemamod.mcef.MCEF
 import com.mojang.blaze3d.systems.RenderSystem
-import de.miraculixx.bmviewer.client.BMViewerClient
+import de.miraculixx.bmviewer.BMViewerClient
 import de.miraculixx.bmviewer.screen.BrowserImpl
 import de.miraculixx.bmviewer.screen.BrowserScreen
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.widget.ButtonWidget
 import net.minecraft.client.gui.widget.ButtonWidget.PressAction
 import net.minecraft.client.gui.widget.TextFieldWidget
-import net.minecraft.client.render.*
+import net.minecraft.client.render.GameRenderer
+import net.minecraft.client.render.Tessellator
+import net.minecraft.client.render.VertexFormat
+import net.minecraft.client.render.VertexFormats
 import net.minecraft.text.Text
 import org.lwjgl.glfw.GLFW
 
