@@ -11,6 +11,7 @@ object ConfigLoader {
         encodeDefaults = true
     }
     val channel = "config"
+    val namespace = "bmviewer"
 
     fun loadConfig(file: File): Config? {
         return if (!file.exists()) {
