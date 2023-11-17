@@ -4,3 +4,8 @@ api-version: 1.16
 version: 1.0.0
 author: Miraculixx
 website: https://mutils.net
+libraries:
+  - "org.jetbrains.kotlin:kotlin-stdlib:1.9.20"
+  - "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1"
+  - "dev.jorel:commandapi-bukkit-shade:9.2.0"
+  - "dev.jorel:commandapi-bukkit-kotlin:9.2.0"
