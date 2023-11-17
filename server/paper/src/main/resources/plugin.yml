@@ -1,0 +1,6 @@
+name: bmviewer
+main: de.miraculixx.bmviewer.BMViewerServer
+api-version: 1.16
+version: 1.0.0
+author: Miraculixx
+website: https://mutils.net
