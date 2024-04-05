@@ -20,6 +20,7 @@ import org.lwjgl.glfw.GLFW
 object BrowserScreenHelper {
     private const val Z_SHIFT = -1
     var currentUrl: String? = null
+    val uuid = MinecraftClient.getInstance().player?.uuid
 
     //Mouse position
     var lastMouseX = 0.0

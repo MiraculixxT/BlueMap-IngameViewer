@@ -5,6 +5,7 @@ import de.miraculixx.bmviewer.util.BrowserScreenHelper
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.browser
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.isOpen
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.lastUrl
+import de.miraculixx.bmviewer.util.BrowserScreenHelper.uuid
 import de.miraculixx.bmviewer.util.sendToastMessage
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
@@ -93,11 +94,15 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
         if (browser == null) {
             urlBox?.renderButton(context, mouseX, mouseY, delta)
             TextWidget(
-                width / 4, height / 2 - 15, width / 2, 15,
-                Text.literal("Server did not provide a BlueMap URL!\\nYou can manually enter an URL"),
+                width / 4, height / 2 - 12, width / 2, 15,
+                Text.literal("Server did not provide a BlueMap URL!"),
                 MinecraftClient.getInstance().textRenderer
             ).render(context, mouseX, mouseY, delta)
-
+            TextWidget(
+                width / 4, height / 2 - 15, width / 2, 15,
+                Text.literal("You can manually enter an URL below"),
+                MinecraftClient.getInstance().textRenderer
+            ).render(context, mouseX, mouseY, delta)
         } else {
             BrowserScreenHelper.renderBrowser(scale, width, height, browser!!.renderer.textureID)
             reloadButton?.render(context, mouseX, mouseY, delta)
@@ -221,6 +226,7 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
             val request = HttpRequest.newBuilder(URI(link)).build()
             BMViewerClient.LOGGER.info("Connecting to $link")
             val body = client.send(request, BodyHandlers.ofString()).body()
+            return true
             body.contains("Sorry but BlueMap doesn't work without JavaScript enabled", true)
         } catch (e: Exception) {
             false

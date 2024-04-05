@@ -1,11 +1,12 @@
 package de.miraculixx.bmviewer
 
 import de.bluecolored.bluemap.api.BlueMapAPI
+import de.miraculixx.bmviewer.config.BrowserAutoConfig
 import de.miraculixx.bmviewer.screen.BrowserScreen
 import de.miraculixx.bmviewer.util.BrowserScreenHelper
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.browser
+import de.miraculixx.bmviewer.util.BrowserScreenHelper.uuid
 import de.miraculixx.bmviewer.util.sendToastMessage
-import de.miraculixx.bmviewer.config.BrowserAutoConfig
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import me.shedaniel.autoconfig.AutoConfig
@@ -26,9 +27,8 @@ import net.minecraft.network.PacketByteBuf
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Identifier
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.lwjgl.glfw.GLFW
+import java.util.logging.Logger
 import kotlin.jvm.optionals.getOrNull
 
 
@@ -73,11 +73,14 @@ class BMViewerClient : ClientModInitializer {
                     return@EndTick
                 }
 
+                if (minecraft.currentScreen is BrowserScreen) {
+                    browser?.close()
+                    return@EndTick
+                }
+
                 client.player?.sendMessage(Text.literal("Open BlueMap!"), true)
-                if (minecraft.currentScreen is BrowserScreen) return@EndTick
-                minecraft.setScreen(
-                    BrowserScreen(Text.literal("BlueMap Viewer"), getConfig().currentUrl)
-                )
+                minecraft.setScreen(BrowserScreen(Text.literal("BlueMap Viewer"), getConfig().currentUrl))
+                browser?.executeJavaScript("bluemap.mapViewer.controlsManager.controls.data.followingPlayer = bluemap.mapViewer.markers.markerSets.get(\"bm-players\").markers.get(\"bm-player-$uuid\");", "", 0)
             }
         })
 
@@ -96,21 +99,30 @@ class BMViewerClient : ClientModInitializer {
             }
         }
 
-        ClientPlayNetworking.registerGlobalReceiver(Identifier.of(ConfigLoader.namespace, ConfigLoader.channel)) {
-            client: MinecraftClient, network: ClientPlayNetworkHandler, packet: PacketByteBuf, sender: PacketSender ->
-            val string = packet.writtenBytes.decodeToString()
+        ClientPlayNetworking.registerGlobalReceiver(
+            Identifier.of(
+                ConfigLoader.namespace,
+                ConfigLoader.channel
+            )
+        ) { client: MinecraftClient, network: ClientPlayNetworkHandler, packet: PacketByteBuf, sender: PacketSender ->
+            var string = packet.writtenBytes.decodeToString()
+            val startIndex = string.indexOf('{')
+            if (startIndex != -1) string = string.substring(startIndex)
+            LOGGER.info("Packet: $string")
             val config = try {
                 Json.decodeFromString<de.miraculixx.bmviewer.Config>(string)
             } catch (_: Exception) {
-                LOGGER.warn("Received invalid packet from server! Did your versions match?")
+                LOGGER.warning("Received invalid packet from server! Did your versions match?")
                 return@registerGlobalReceiver
             }
-            LOGGER.info("PACKET: $config")
+            LOGGER.info(" -> $config")
+            getConfig().currentUrl = config.url
+            sendToastMessage(Text.literal("BlueMap Connected").formatted(Formatting.GREEN), Text.literal("Successfully connected to servers BlueMap"))
         }
     }
 
     companion object {
         fun getConfig(): BrowserAutoConfig = AutoConfig.getConfigHolder(BrowserAutoConfig::class.java).config
-        val LOGGER: Logger = LogManager.getLogger("BMViewer")
+        val LOGGER: Logger = Logger.getLogger("BMViewer")
     }
 }
