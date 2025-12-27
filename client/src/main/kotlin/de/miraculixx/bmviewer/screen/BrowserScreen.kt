@@ -5,16 +5,17 @@ import de.miraculixx.bmviewer.util.BrowserScreenHelper
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.browser
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.isOpen
 import de.miraculixx.bmviewer.util.BrowserScreenHelper.lastUrl
-import de.miraculixx.bmviewer.util.BrowserScreenHelper.uuid
 import de.miraculixx.bmviewer.util.sendToastMessage
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.gui.widget.ButtonWidget
-import net.minecraft.client.gui.widget.TextFieldWidget
-import net.minecraft.client.gui.widget.TextWidget
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
+import net.minecraft.ChatFormatting
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.components.Button
+import net.minecraft.client.gui.components.EditBox
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent
+import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.network.chat.Component
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -22,14 +23,14 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
-class BrowserScreen(title: Text?, private var initURL: String, private val sendError: Boolean = false) : Screen(title) {
+class BrowserScreen(title: Component?, private var initURL: String, private val sendError: Boolean = false) : Screen(title) {
     private var scale = 10
 
     // Only visible if no auto connect was possible
-    private var urlBox: TextFieldWidget? = null
+    private var urlBox: EditBox? = null
 
     // Only visible if map is loaded
-    private var reloadButton: ButtonWidget? = null
+    private var reloadButton: Button? = null
 
     override fun init() {
         super.init()
@@ -42,11 +43,11 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
         // Reload/Load BlueMap if needed
         if (browser == null) {
             if (checkLink(initURL)) {
-                sendToastMessage(Text.literal("BlueMap Update").formatted(Formatting.GREEN), Text.literal("Loading $initURL..."))
+                sendToastMessage(Component.literal("BlueMap Update").withStyle(ChatFormatting.GREEN), Component.literal("Loading $initURL..."))
                 browser = BrowserScreenHelper.createBrowser(initURL, transparent)
                 lastUrl = initURL
             } else if (sendError) {
-                sendToastMessage(Text.literal("BlueMap Update").formatted(Formatting.RED), Text.literal("Target URL is not a BlueMap"))
+                sendToastMessage(Component.literal("BlueMap Update").withStyle(ChatFormatting.RED), Component.literal("Target URL is not a BlueMap"))
             }
         } else if (lastUrl != initURL) {
             lastUrl = initURL
@@ -55,8 +56,8 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
             } else {
                 browser!!.close()
                 browser = null
-                close()
-                sendToastMessage(Text.of("Failed Connecting!"), Text.of("Invalid URL: $initURL"))
+                onClose()
+                sendToastMessage(Component.literal("Failed Connecting!"), Component.literal("Invalid URL: $initURL"))
                 return
             }
         }
@@ -69,58 +70,61 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
         }
 
         if (browser != null) {
-            reloadButton = BrowserScreenHelper.initButton(Text.of("⟳"), { BrowserScreenHelper.reloadButtonAction() }, 0, height - 15)
-                .apply { addSelectableChild(this) }
+            reloadButton = BrowserScreenHelper.initButton(Component.literal("⟳"), { BrowserScreenHelper.reloadButtonAction() }, 0, height - 15)
+                .apply { addWidget(this) }
         } else {
-            urlBox = BrowserScreenHelper.initUrlBox(width, height).apply { addSelectableChild(this) }
+            urlBox = BrowserScreenHelper.initUrlBox(width, height).apply { addWidget(this) }
         }
     }
 
-    override fun resize(minecraft: MinecraftClient, i: Int, j: Int) {
+    override fun resize(minecraft: Minecraft, i: Int, j: Int) {
         super.resize(minecraft, i, j)
         resizeWidgets()
-        urlBox?.let { if (!children().contains(urlBox)) addSelectableChild(urlBox) }
-        reloadButton?.let { if (!children().contains(reloadButton)) addSelectableChild(reloadButton) }
+        urlBox?.let { if (!children().contains(urlBox)) addWidget(urlBox) }
+        reloadButton?.let { if (!children().contains(reloadButton)) addWidget(reloadButton) }
     }
 
-    override fun close() {
+    override fun onClose() {
         BrowserScreenHelper.openScreen = null
         isOpen = false
-        super.close()
+        super.onClose()
     }
 
-    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         super.render(context, mouseX, mouseY, delta)
         if (browser == null) {
-            urlBox?.renderButton(context, mouseX, mouseY, delta)
-            TextWidget(
+            urlBox?.render(context, mouseX, mouseY, delta)
+            EditBox(
+                Minecraft.getInstance().font,
                 width / 4, height / 2 - 12, width / 2, 15,
-                Text.literal("Server did not provide a BlueMap URL!"),
-                MinecraftClient.getInstance().textRenderer
+                Component.literal("Server did not provide a BlueMap URL!")
             ).render(context, mouseX, mouseY, delta)
-            TextWidget(
+
+            EditBox(
+                Minecraft.getInstance().font,
                 width / 4, height / 2 - 15, width / 2, 15,
-                Text.literal("You can manually enter an URL below"),
-                MinecraftClient.getInstance().textRenderer
+                Component.literal("You can manually enter an URL below")
             ).render(context, mouseX, mouseY, delta)
+
         } else {
             BrowserScreenHelper.renderBrowser(scale, width, height, browser!!.renderer.textureID)
             reloadButton?.render(context, mouseX, mouseY, delta)
         }
 
         if (BrowserScreenHelper.tooltipText != null && BrowserScreenHelper.tooltipText!!.toByteArray().isNotEmpty()) {
-            setTooltip(Text.of(BrowserScreenHelper.tooltipText))
+            //setTooltip(Component.literal(BrowserScreenHelper.tooltipText))
         }
     }
 
-    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        mouseButtonControl(mouseX, mouseY, button, true)
-        return super.mouseClicked(mouseX, mouseY, button)
+
+    override fun mouseClicked(event: MouseButtonEvent, isClick: Boolean): Boolean {
+        mouseButtonControl(event.x, event.y, event.button(), true)
+        return super.mouseClicked(event, isClick)
     }
 
-    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        mouseButtonControl(mouseX, mouseY, button, false)
-        return super.mouseReleased(mouseX, mouseY, button)
+    override fun mouseReleased(event: MouseButtonEvent): Boolean {
+        mouseButtonControl(event.x, event.y, event.button(), false)
+        return super.mouseReleased(event)
     }
 
     override fun mouseMoved(mouseX: Double, mouseY: Double) {
@@ -133,12 +137,12 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
         super.mouseMoved(mouseX, mouseY)
     }
 
-    override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, dragX: Double, dragY: Double): Boolean {
-        BrowserScreenHelper.updateMouseLocation(mouseX, mouseY)
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY)
+    override fun mouseDragged(event: MouseButtonEvent, d: Double, e: Double): Boolean {
+        BrowserScreenHelper.updateMouseLocation(event.x, event.y)
+        return super.mouseDragged(event, d, e)
     }
 
-    override fun mouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, delta: Double, idk: Double): Boolean {
         CompletableFuture.runAsync {
             browser?.sendMouseWheel(
                 BrowserScreenHelper.mouseX(mouseX, scale),
@@ -147,26 +151,25 @@ class BrowserScreen(title: Text?, private var initURL: String, private val sendE
                 0
             )
         }
-        return super.mouseScrolled(mouseX, mouseY, delta)
+        return super.mouseScrolled(mouseX, mouseY, delta, idk)
     }
 
-    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+    override fun keyPressed(event: KeyEvent): Boolean {
         setFocus()
-
-        return super.keyPressed(keyCode, scanCode, modifiers)
+        return super.keyPressed(event)
     }
 
-    override fun keyReleased(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
-        CompletableFuture.runAsync { browser?.sendKeyRelease(keyCode, scanCode.toLong(), modifiers) }
+    override fun keyReleased(event: KeyEvent): Boolean {
+        CompletableFuture.runAsync { browser?.sendKeyRelease(event.key, event.scancode.toLong(), event.modifiers) }
         setFocus()
-        return super.keyReleased(keyCode, scanCode, modifiers)
+        return super.keyReleased(event)
     }
 
-    override fun charTyped(codePoint: Char, modifiers: Int): Boolean {
-        if (codePoint == 0.toChar()) return false
-        CompletableFuture.runAsync { browser?.sendKeyTyped(codePoint, modifiers) }
+    override fun charTyped(event: CharacterEvent): Boolean {
+        if (event.codepoint == 0) return false
+        CompletableFuture.runAsync { browser?.sendKeyTyped(event.codepointAsString().first(), event.modifiers) }
         setFocus()
-        return super.charTyped(codePoint, modifiers)
+        return super.charTyped(event)
     }
 
     private fun setFocus() {

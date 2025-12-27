@@ -12,16 +12,17 @@ repositories {
 
 dependencies {
     // To change the versions see the gradle.properties file
-    minecraft("com.mojang:minecraft:1.20.1")
-    mappings("net.fabricmc:yarn:1.20.1+build.10:v2")
-    modImplementation("net.fabricmc:fabric-loader:0.14.21")
+    minecraft("com.mojang:minecraft:${properties["minecraft_version"]}")
+    mappings(loom.officialMojangMappings())
+    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"]}")
 
-    // Fabric API. This is technically optional, but you probably want it anyway.
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.89.0+1.20.1")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${properties["fabric_version"]}")
+    modImplementation("net.fabricmc:fabric-language-kotlin:${properties["kotlin_version"]}")
 
-    modApi("me.shedaniel.cloth:cloth-config-fabric:11.1.106") {
+    modApi("me.shedaniel.cloth:cloth-config-fabric:${properties["cloth_config_version"]}") {
         exclude("net.fabricmc.fabric-api")
     }
-    modApi("com.terraformersmc:modmenu:7.2.2")
-    compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:v2.5.1")
+    modApi("com.terraformersmc:modmenu:${properties["modmenu_version"]}") {
+        exclude("net.fabricmc.fabric-api")
+    }
 }

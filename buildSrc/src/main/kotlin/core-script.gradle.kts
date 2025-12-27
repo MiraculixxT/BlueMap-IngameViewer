@@ -6,25 +6,24 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven {
-        name = "JitPack"
-        setUrl("https://jitpack.io")
-    }
+    maven("https://repo.bluecolored.de/releases")
 }
 
 dependencies {
     implementation("org.yaml:snakeyaml:1.33")
-    implementation("com.github.BlueMap-Minecraft:BlueMapAPI:v2.5.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
-    implementation("com.github.BlueMap-Minecraft:BlueMapAPI:v2.2.1")
+    implementation("de.bluecolored:bluemap-api:2.7.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.+")
 }
 
 tasks {
     compileJava {
         options.encoding = "UTF-8"
-        options.release.set(17)
+        options.release.set(21)
     }
-    compileKotlin {
-        kotlinOptions.jvmTarget = "17"
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile::class.java).configureEach {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        }
     }
 }

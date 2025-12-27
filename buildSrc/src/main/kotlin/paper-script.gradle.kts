@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    paperDevBundle("1.20.1-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("${properties["minecraft_version"]}-R0.1-SNAPSHOT")
 
 }
 

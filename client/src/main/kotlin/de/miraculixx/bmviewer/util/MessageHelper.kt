@@ -1,9 +1,9 @@
 package de.miraculixx.bmviewer.util
 
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.toast.SystemToast
-import net.minecraft.text.Text
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.components.toasts.SystemToast
+import net.minecraft.network.chat.Component
 
-fun sendToastMessage(title: Text, description: Text) {
-    MinecraftClient.getInstance().toastManager.add(SystemToast(SystemToast.Type.TUTORIAL_HINT, title, description))
+fun sendToastMessage(title: Component, description: Component) {
+    Minecraft.getInstance().toastManager.addToast(SystemToast( SystemToast.SystemToastId.PERIODIC_NOTIFICATION, title, description))
 }
